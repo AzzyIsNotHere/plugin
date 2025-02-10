@@ -167,7 +167,7 @@ namespace SillySCP.Handlers
         {
             if (ev.KnobSetting == Scp914KnobSetting.Fine && ev.Item.Type == ItemType.Coin)
             {
-                int randomNum = Random.Range(1, 3);
+                int randomNum = Random.Range(3, 0);
                 ev.Player.RemoveHeldItem();
                 ev.IsAllowed = false;
                 switch (randomNum)
