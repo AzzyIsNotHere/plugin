@@ -9,6 +9,7 @@ using Exiled.Events.EventArgs.Scp914;
 using InventorySystem;
 using MEC;
 using PlayerRoles;
+using PluginAPI.Core.Zones;
 using Scp914;
 using Scp914.Processors;
 using SillySCP.API.Features;
@@ -52,11 +53,12 @@ namespace SillySCP.Handlers
             if (ev.KnobSetting == Scp914KnobSetting.Rough && ev.Player.CurrentItem == null)
             {
                 ev.IsAllowed = false;
-                Room randomRoom = Room.Get(ZoneType.LightContainment)
-                    .Where(r => r.Type is not RoomType.Lcz330 and not RoomType.Lcz914 and not RoomType.LczArmory and not RoomType.Lcz173)
+                Room randomRoom = Room.Get(ZoneType.LightContainment|ZoneType.HeavyContainment|ZoneType.Entrance)
+                    .Where(r => r.Type is not RoomType.Lcz330 and not RoomType.Lcz914 and not RoomType.LczArmory and not RoomType.Lcz173 and not RoomType.HczArmory and not RoomType.HczNuke and not RoomType.HczTesla and not RoomType.HczTestRoom and not RoomType.Hcz106)
                     .GetRandomValue();
                 
                 ev.Player.Position = new (randomRoom.Position.x, randomRoom.Position.y + 1, randomRoom.Position.z);
+                int randomNum = Random.Range(20, 0);
                 if (ev.Player.IsHuman)
                 {
                     if (ev.Player.Health <= 25)
@@ -64,6 +66,11 @@ namespace SillySCP.Handlers
                         ev.Player.Kill(DamageType.Scp);
                         return;
                     }
+                    else if (randomNum == 1)
+                    {
+                        ev.Player.EnableEffect(EffectType.PocketCorroding, 1, 10);
+                    }
+
                     ev.Player.EnableEffect(EffectType.Disabled, 1, 10);
                 }
                 else
