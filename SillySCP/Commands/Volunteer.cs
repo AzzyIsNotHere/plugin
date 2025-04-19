@@ -1,4 +1,5 @@
 ﻿using CommandSystem;
+using Exiled.API.Extensions;
 using PlayerRoles;
 using SillySCP.API.Features;
 using Player = Exiled.API.Features.Player;
@@ -32,11 +33,12 @@ namespace SillySCP.Commands
                 return false;
             }
 
-            if (player.IsScp)
+            if (player.IsScp && player.Role != RoleTypeId.Scp0492) // zombies should beable to volunteer for regular scp's 
             {
                 response = "You are already an SCP! If they get replaced, you can swap with the person if they wish!";
                 return false;
             }
+            
             
             if(arguments.Count != 1)
             {
@@ -45,10 +47,15 @@ namespace SillySCP.Commands
             }
 
             RoleTypeId role;
-
-            if (!Enum.TryParse("Scp" + arguments.At(0), true, out role) && !Enum.TryParse(arguments.At(0), true, out role))
+            
+            if (!VolunteerSystem.VaildScps.TryGetValue(arguments.At(0), out role) && !Enum.TryParse(arguments.At(0), true, out role))
             {
                 response = "Error parsing the RoleTypeId.";
+                return false;
+            }
+            if (player.IsAlive && role == RoleTypeId.Scp0492)
+            {
+                response = "Alive Players cannot volunteer as a zombie";
                 return false;
             }
 
@@ -70,7 +77,9 @@ namespace SillySCP.Commands
             
             volunteer.Players.Add(player);
             
-            player.Broadcast(5, "You have volunteered to become SCP-" + arguments.First() + "!", Broadcast.BroadcastFlags.Normal, true);
+            player.Broadcast(5, "You have volunteered to become " + role.GetFullName() + "!", Broadcast.BroadcastFlags.Normal, true);
+            
+            VolunteerSystem.RaiseVolunteerEvent(player, volunteer);
             
             response = "Done!";
             return true;

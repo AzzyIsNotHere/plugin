@@ -1,11 +1,11 @@
 ﻿using Exiled.API.Enums;
 using Exiled.API.Extensions;
-using Exiled.API.Features;
 using Exiled.Events.EventArgs.Player;
 using MEC;
 using PlayerRoles;
 using SillySCP.API.Features;
 using SillySCP.API.Interfaces;
+using SillySCP.API.Modules;
 
 namespace SillySCP.Handlers
 {
@@ -17,6 +17,8 @@ namespace SillySCP.Handlers
             Exiled.Events.Handlers.Server.RoundStarted += OnRoundStarted;
             Exiled.Events.Handlers.Player.Died += OnDead;
             Exiled.Events.Handlers.Player.ChangingRole += OnChangingRole;
+
+            VolunteerSystem.VolunteerPeriodEnd += OnVolunteerPeriodEnd;
         }
 
         public void Unregister()
@@ -36,29 +38,15 @@ namespace SillySCP.Handlers
             }
         }
         
-        private void Volunteer(Exiled.API.Features.Player player, RoleTypeId oldRole)
-        {
-            Volunteers volunteer = new ()
-            {
-                Replacement = oldRole,
-                Players = new()
-            };
-            VolunteerSystem.Volunteers ??= new();
-            VolunteerSystem.Volunteers.Add(volunteer);
-            if (player.IsScp) return;
-            Map.Broadcast(10,
-                $"{oldRole.GetFullName()} has left the game\nPlease run .volunteer {oldRole.GetFullName().Split('-')[1]} to volunteer to be the SCP");
-            Timing.RunCoroutine(VolunteerSystem.ChooseVolunteers(volunteer));
-        }
 
         private void OnDead(DiedEventArgs ev)
         {
             if (!VolunteerSystem.ReadyVolunteers) return;
             if (!ev.TargetOldRole.IsScp()) return;
             if (ev.TargetOldRole == RoleTypeId.Scp0492) return;
-            if (ev.DamageHandler.IsSuicide || ev.DamageHandler.Type is DamageType.Unknown or DamageType.Custom || ev.Attacker == ev.Player)
+            if (ev.DamageHandler.IsSuicide || ev.DamageHandler.Type is DamageType.Unknown or DamageType.Custom or DamageType.Tesla or DamageType.Crushed || ev.Attacker == ev.Player)
             {
-                Volunteer(ev.Player, ev.TargetOldRole);
+                VolunteerSystem.NewVolunteer(ev.TargetOldRole);
             }
         }
 
@@ -74,6 +62,26 @@ namespace SillySCP.Handlers
         {
             VolunteerSystem.Volunteers = new();
             Timing.RunCoroutine(VolunteerSystem.DisableVolunteers());
+        }
+
+        private void OnVolunteerPeriodEnd()
+        {
+            // only doing this to save some resources, don't come at me
+            List<Exiled.API.Features.Player> scps = Exiled.API.Features.Player.List.Where(p => p.IsScp).ToList();
+            if (scps.Count == 0) return;
+            List<string> scpNames = scps.Select(scp => scp.Role.Name).ToList();
+            List<string> scpNamesCopy = new(scpNames);
+            scpNamesCopy.RemoveAt(scpNamesCopy.Count-1);
+            foreach (Exiled.API.Features.Player player in scps)
+            {
+                if (scpNames.Count == 1)
+                {
+                    if(Exiled.API.Features.Server.PlayerCount >= 8)
+                        player.ShowString("<size=10em>You are the only SCP on your team</size>", 5);
+                    return;
+                }
+                player.ShowString($"<size=10em>You currently have {string.Join(", ", scpNamesCopy)} and {scpNames.Last()} as your team mates</size>", 15);   
+            }
         }
     }
 }

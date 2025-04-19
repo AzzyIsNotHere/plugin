@@ -2,15 +2,13 @@
 using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
-using Exiled.API.Features.Items;
-using Exiled.API.Features.Pickups;
 using Exiled.Events.EventArgs.Player;
+using Exiled.Events.EventArgs.Scp330;
 using Exiled.Events.EventArgs.Scp914;
-using InventorySystem;
+using InventorySystem.Items.Usables.Scp330;
 using MEC;
 using PlayerRoles;
 using Scp914;
-using Scp914.Processors;
 using SillySCP.API.Features;
 using SillySCP.API.Interfaces;
 using SillySCP.API.Modules;
@@ -167,7 +165,7 @@ namespace SillySCP.Handlers
         {
             if (ev.KnobSetting == Scp914KnobSetting.Fine && ev.Item.Type == ItemType.Coin)
             {
-                int randomNum = Random.Range(1, 3);
+                int randomNum = Random.Range(1, 4);
                 ev.Player.RemoveHeldItem();
                 ev.IsAllowed = false;
                 switch (randomNum)
