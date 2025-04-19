@@ -1,8 +1,5 @@
 obj/
 bin/
 packages/*/
-<<<<<<< HEAD
 /.vs
-=======
 *.user
->>>>>>> upstream/main
